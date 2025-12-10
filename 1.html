@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Couple Space - 我们的专属空间</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- PeerJS for P2P Connection -->
+    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", sans-serif;
+            background-color: #F2F2F7; /* Apple System Gray 6 */
+            color: #1D1D1F;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Glassmorphism */
+        .glass {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .btn-apple {
+            transition: all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+        .btn-apple:active {
+            transform: scale(0.96);
+            opacity: 0.8;
+        }
+
+        /* Hide Scrollbar */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Animations */
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
+        
+        .slide-up-enter-active, .slide-up-leave-active { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .slide-up-enter-from, .slide-up-leave-to { transform: translateY(100%); }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex justify-center bg-gray-100">
+
+    <div id="app" class="w-full max-w-md bg-[#F2F2F7] min-h-screen relative shadow-2xl overflow-hidden flex flex-col">
+
+        <!-- Header -->
+        <header class="glass sticky top-0 z-50 px-6 py-4 flex justify-between items-center shadow-sm">
+            <h1 class="text-xl font-semibold tracking-tight text-gray-900">Couple Space ❤️</h1>
+            <div class="flex items-center gap-2">
+                <span :class="isConnected ? 'bg-green-500' : 'bg-red-400'" class="w-2.5 h-2.5 rounded-full animate-pulse"></span>
+                <span class="text-xs text-gray-500 font-medium">{{ isConnected ? '已连接' : '离线' }}</span>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 p-6 overflow-y-auto no-scrollbar pb-24">
+            
+            <!-- Step 1: Login / Connect -->
+            <transition name="fade" mode="out-in">
+                <div v-if="!isConnected" class="flex flex-col gap-6 mt-10" key="connect">
+                    <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 text-center">
+                        <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">🏠</div>
+                        <h2 class="text-lg font-semibold mb-2">建立连接</h2>
+                        <p class="text-sm text-gray-400 mb-6">把你的 ID 发给对方，或者输入对方的 ID。</p>
+                        
+                        <div class="bg-gray-50 p-3 rounded-xl flex justify-between items-center mb-4">
+                            <span class="font-mono text-sm text-gray-600 truncate mr-2">{{ myPeerId || '生成中...' }}</span>
+                            <button @click="copyId" class="text-blue-500 text-xs font-semibold px-2 py-1 bg-blue-50 rounded-lg">复制</button>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <input v-model="targetPeerId" type="text" placeholder="输入对方 ID" class="flex-1 bg-gray-100 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition">
+                            <button @click="connectToPeer" class="btn-apple bg-black text-white px-6 rounded-xl font-medium text-sm">连接</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Game Dashboard -->
+                <div v-else-if="!currentGame" class="grid grid-cols-2 gap-4" key="dashboard">
+                    <div v-for="(game, index) in games" :key="index" 
+                         @click="selectGame(game.id)"
+                         class="btn-apple bg-white rounded-3xl p-4 shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-3 aspect-square cursor-pointer hover:shadow-md transition">
+                        <div class="text-4xl filter drop-shadow-sm">{{ game.icon }}</div>
+                        <span class="text-sm font-medium text-gray-700">{{ game.name }}</span>
+                    </div>
+                </div>
+
+                <!-- Step 3: Active Game View -->
+                <div v-else class="flex flex-col h-full" key="game">
+                    <!-- Game Header -->
+                    <div class="flex justify-between items-center mb-6">
+                        <button @click="exitGame" class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-gray-600">
+                            <i class="ph ph-arrow-left text-xl"></i>
+                        </button>
+                        <h2 class="text-lg font-bold">{{ activeGameMeta.name }}</h2>
+                        <div class="w-10"></div> <!-- spacer -->
+                    </div>
+
+                    <!-- Game Container -->
+                    <div class="bg-white rounded-3xl shadow-sm border border-white p-6 flex-1 relative overflow-hidden">
+                        
+                        <!-- 1. Telepathy -->
+                        <div v-if="currentGame === 'telepathy'" class="h-full flex flex-col justify-center items-center gap-8">
+                            <div class="text-center">
+                                <p class="text-gray-400 mb-2">题目</p>
+                                <h3 class="text-2xl font-bold">{{ gameState.telepathy.question }}</h3>
+                            </div>
+                            <div v-if="!gameState.telepathy.result" class="flex gap-4 w-full">
+                                <button @click="sendGameMove('A')" :class="{'bg-blue-500 text-white': gameState.telepathy.myChoice === 'A'}" class="flex-1 h-32 rounded-2xl bg-blue-50 text-blue-600 font-bold text-2xl flex items-center justify-center transition">A</button>
+                                <button @click="sendGameMove('B')" :class="{'bg-pink-500 text-white': gameState.telepathy.myChoice === 'B'}" class="flex-1 h-32 rounded-2xl bg-pink-50 text-pink-600 font-bold text-2xl flex items-center justify-center transition">B</button>
+                            </div>
+                            <div v-else class="text-center animate-bounce">
+                                <div class="text-6xl mb-4">{{ gameState.telepathy.match ? '💖' : '💔' }}</div>
+                                <p class="text-xl font-bold">{{ gameState.telepathy.match ? '默契满分！' : '再接再厉！' }}</p>
+                                <button @click="resetGame" class="mt-6 px-6 py-2 bg-gray-900 text-white rounded-full text-sm">下一题</button>
+                            </div>
+                        </div>
+
+                        <!-- 2. Click War -->
+                        <div v-else-if="currentGame === 'clickwar'" class="h-full flex flex-col items-center justify-center">
+                            <div class="flex justify-between w-full mb-8 px-4">
+                                <div class="text-center"><p class="text-xs text-gray-400">你</p><p class="text-3xl font-bold text-blue-600">{{ gameState.clickwar.myScore }}</p></div>
+                                <div class="text-2xl font-mono text-gray-300">{{ gameState.clickwar.timeLeft }}s</div>
+                                <div class="text-center"><p class="text-xs text-gray-400">Ta</p><p class="text-3xl font-bold text-pink-600">{{ gameState.clickwar.opponentScore }}</p></div>
+                            </div>
+                            <button @click="sendGameMove('click')" :disabled="!gameState.clickwar.playing" 
+                                class="w-48 h-48 rounded-full bg-gradient-to-b from-red-400 to-red-500 shadow-lg shadow-red-200 text-white text-2xl font-bold active:scale-90 transition transform">
+                                {{ gameState.clickwar.playing ? '点我！' : '准备' }}
+                            </button>
+                        </div>
+
+                        <!-- 3. Dice -->
+                        <div v-else-if="currentGame === 'dice'" class="h-full flex flex-col items-center justify-center gap-10">
+                            <div class="flex items-center gap-8">
+                                <div class="text-center">
+                                    <div class="w-20 h-20 bg-blue-100 rounded-xl flex items-center justify-center text-4xl mb-2">{{ gameState.dice.myRoll || '?' }}</div>
+                                    <span class="text-xs text-gray-500">你</span>
+                                </div>
+                                <div class="text-gray-300 text-xl">VS</div>
+                                <div class="text-center">
+                                    <div class="w-20 h-20 bg-pink-100 rounded-xl flex items-center justify-center text-4xl mb-2">{{ gameState.dice.opRoll || '?' }}</div>
+                                    <span class="text-xs text-gray-500">Ta</span>
+                                </div>
+                            </div>
+                            <button @click="sendGameMove('roll')" :disabled="gameState.dice.myRoll" class="btn-apple px-8 py-3 bg-black text-white rounded-full font-medium disabled:opacity-50">
+                                {{ gameState.dice.myRoll ? '等待对方...' : '掷骰子' }}
+                            </button>
+                            <div v-if="gameState.dice.winner" class="text-lg font-bold text-purple-600">
+                                {{ gameState.dice.winner === 'me' ? '你赢了！🎉' : (gameState.dice.winner === 'tie' ? '平局 🤝' : 'Ta 赢了 😭') }}
+                                <div class="mt-4 text-center"><button @click="resetGame" class="text-sm underline text-gray-400">再来一次</button></div>
+                            </div>
+                        </div>
+
+                        <!-- 4. Draw Guess (Canvas) -->
+                        <div v-else-if="currentGame === 'draw'" class="h-full flex flex-col">
+                            <div class="flex-1 bg-gray-50 rounded-xl border border-gray-100 relative touch-none">
+                                <canvas ref="drawCanvas" class="w-full h-full block rounded-xl" @touchstart.prevent="startDraw" @touchmove.prevent="drawing" @touchend="endDraw" @mousedown="startDraw" @mousemove="drawing" @mouseup="endDraw"></canvas>
+                                <button @click="clearCanvas(true)" class="absolute top-2 right-2 p-2 bg-white rounded-lg shadow-sm text-red-500"><i class="ph ph-trash"></i></button>
+                            </div>
+                            <p class="text-center text-xs text-gray-400 mt-2">实时同步画板</p>
+                        </div>
+
+                         <!-- 5. Reaction -->
+                         <div v-else-if="currentGame === 'reaction'" 
+                              @click="sendGameMove('react')"
+                              :class="gameState.reaction.status === 'green' ? 'bg-green-500' : (gameState.reaction.status === 'red' ? 'bg-red-500' : 'bg-gray-100')"
+                              class="h-full w-full rounded-2xl flex items-center justify-center transition-colors duration-200 cursor-pointer">
+                            <p class="text-2xl font-bold" :class="gameState.reaction.status === 'waiting' ? 'text-gray-800' : 'text-white'">
+                                {{ gameState.reaction.message }}
+                            </p>
+                        </div>
+
+                        <!-- 6. RPS (Rock Paper Scissors) -->
+                        <div v-else-if="currentGame === 'rps'" class="h-full flex flex-col justify-center items-center">
+                            <div class="text-6xl mb-10 transition-all duration-500">{{ gameState.rps.opponentMoved ? (gameState.rps.show ? gameState.rps.opChoice : '✊') : '⏳' }}</div>
+                            <div v-if="gameState.rps.show" class="text-xl font-bold mb-8">{{ gameState.rps.result }}</div>
+                            <div class="flex gap-4">
+                                <button v-for="c in ['✊','✌️','🖐️']" @click="sendGameMove(c)" 
+                                    :class="{'bg-black text-white scale-110': gameState.rps.myChoice === c}"
+                                    class="w-16 h-16 bg-white shadow-md rounded-full text-3xl flex items-center justify-center transition hover:scale-110">
+                                    {{ c }}
+                                </button>
+                            </div>
+                            <button v-if="gameState.rps.show" @click="resetGame" class="mt-8 text-sm text-gray-400 underline">再来一局</button>
+                        </div>
+
+                        <!-- 7. Truth (Spin Wheel logic simplified) -->
+                        <div v-else-if="currentGame === 'truth'" class="h-full flex flex-col justify-center items-center p-4">
+                             <div class="card bg-gradient-to-br from-indigo-500 to-purple-600 text-white p-8 rounded-3xl shadow-xl min-h-[200px] flex items-center justify-center text-center">
+                                <p class="text-xl font-medium leading-relaxed">{{ gameState.truth.question }}</p>
+                             </div>
+                             <button @click="sendGameMove('spin')" class="mt-8 px-8 py-3 bg-white border border-gray-200 shadow-sm rounded-full font-bold text-gray-800 active:scale-95 transition">
+                                 🎲 抽取真心话
+                             </button>
+                        </div>
+
+                        <!-- 8. Sync Test -->
+                        <div v-else-if="currentGame === 'sync'" class="h-full flex flex-col justify-center items-center">
+                            <p class="mb-4 text-gray-500 text-sm">同时按下，心里默数3秒松开</p>
+                            <button @touchstart.prevent="sendGameMove('down')" @touchend.prevent="sendGameMove('up')" @mousedown="sendGameMove('down')" @mouseup="sendGameMove('up')"
+                                class="w-32 h-32 rounded-full bg-rose-500 text-white shadow-lg shadow-rose-200 flex items-center justify-center text-4xl active:scale-95 transition-transform duration-75">
+                                ❤️
+                            </button>
+                            <div v-if="gameState.sync.result" class="mt-6 text-center">
+                                <p class="text-2xl font-bold text-gray-800">{{ gameState.sync.diff }}ms</p>
+                                <p class="text-xs text-gray-400">时间差越小越好</p>
+                            </div>
+                        </div>
+
+                        <!-- 9. Guess Number -->
+                        <div v-else-if="currentGame === 'guessnum'" class="h-full flex flex-col justify-center items-center">
+                             <div v-if="gameState.guessnum.role === 'setter'" class="text-center w-full">
+                                 <p class="mb-2">设定一个 1-100 的数字</p>
+                                 <input type="number" v-model="gameState.guessnum.input" class="text-center text-3xl w-full border-b-2 border-gray-200 py-2 outline-none bg-transparent mb-4">
+                                 <button @click="sendGameMove('set')" class="btn-apple bg-black text-white px-6 py-2 rounded-full">确定</button>
+                             </div>
+                             <div v-else-if="gameState.guessnum.role === 'guesser'" class="text-center w-full">
+                                <p class="mb-2">猜猜Ta设定的数字 ({{ gameState.guessnum.min }} - {{ gameState.guessnum.max }})</p>
+                                <input type="number" v-model="gameState.guessnum.input" class="text-center text-3xl w-full border-b-2 border-gray-200 py-2 outline-none bg-transparent mb-4">
+                                <button @click="sendGameMove('guess')" class="btn-apple bg-blue-500 text-white px-6 py-2 rounded-full">我猜</button>
+                             </div>
+                             <p class="mt-4 font-bold text-xl text-blue-600">{{ gameState.guessnum.message }}</p>
+                        </div>
+
+                        <!-- 10. Daily Pill -->
+                        <div v-else-if="currentGame === 'pill'" class="h-full flex flex-col justify-center items-center">
+                            <div v-if="!gameState.pill.opened" @click="sendGameMove('open')" class="cursor-pointer animate-pulse text-9xl">💊</div>
+                            <div v-else class="bg-yellow-50 p-6 rounded-2xl border border-yellow-100 text-center transform transition-all duration-500 scale-100">
+                                <p class="text-gray-500 text-xs mb-2 uppercase tracking-widest">Daily Prescription</p>
+                                <p class="text-xl font-serif text-gray-800 italic">"{{ gameState.pill.text }}"</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </transition>
+        </main>
+    </div>
+
+    <script>
+        const { createApp, reactive, ref, onMounted, nextTick } = Vue;
+
+        createApp({
+            setup() {
+                // PeerJS Setup
+                const peer = new Peer(null, { debug: 2 }); // Auto-generate ID
+                const myPeerId = ref('');
+                const targetPeerId = ref('');
+                const isConnected = ref(false);
+                let conn = null;
+
+                // Game State
+                const currentGame = ref(null);
+                const games = [
+                    { id: 'telepathy', name: '默契大考验', icon: '❤️' },
+                    { id: 'clickwar', name: '手速对决', icon: '👆' },
+                    { id: 'dice', name: '掷骰子', icon: '🎲' },
+                    { id: 'draw', name: '你画我猜', icon: '🎨' },
+                    { id: 'reaction', name: '反应测试', icon: '⏱️' },
+                    { id: 'rps', name: '猜拳', icon: '✌️' },
+                    { id: 'truth', name: '真心话', icon: '📝' },
+                    { id: 'sync', name: '心动频率', icon: '💓' },
+                    { id: 'guessnum', name: '猜数字', icon: '🔢' },
+                    { id: 'pill', name: '日常药丸', icon: '💊' },
+                ];
+
+                const activeGameMeta = ref({});
+
+                // Reactive Game Logic States
+                const gameState = reactive({
+                    telepathy: { question: '?', myChoice: null, opChoice: null, match: false, result: false },
+                    clickwar: { myScore: 0, opponentScore: 0, timeLeft: 10, playing: false },
+                    dice: { myRoll: null, opRoll: null, winner: null },
+                    reaction: { status: 'waiting', message: '变绿就点！', startTime: 0 },
+                    rps: { myChoice: null, opChoice: null, opponentMoved: false, show: false, result: '' },
+                    truth: { question: '点击按钮抽取题目' },
+                    sync: { myTime: 0, opTime: 0, result: false, diff: 0 },
+                    guessnum: { role: 'setter', input: '', min: 1, max: 100, target: null, message: '等待开始' },
+                    pill: { opened: false, text: '' }
+                });
+
+                // Canvas Ref
+                const drawCanvas = ref(null);
+                let ctx = null;
+
+                // --- Networking Logic ---
+
+                peer.on('open', (id) => {
+                    myPeerId.value = id;
+                });
+
+                peer.on('connection', (c) => {
+                    handleConnection(c);
+                });
+
+                const connectToPeer = () => {
+                    if (!targetPeerId.value) return alert('请输入ID');
+                    const c = peer.connect(targetPeerId.value);
+                    handleConnection(c);
+                };
+
+                const handleConnection = (c) => {
+                    conn = c;
+                    conn.on('open', () => {
+                        isConnected.value = true;
+                        // Send handshake or sync
+                    });
+                    conn.on('data', (data) => {
+                        handleData(data);
+                    });
+                    conn.on('close', () => {
+                        isConnected.value = false;
+                        alert('连接断开');
+                        currentGame.value = null;
+                    });
+                };
+
+                const sendData = (type, payload) => {
+                    if (conn && conn.open) {
+                        conn.send({ type, payload });
+                    }
+                };
+
+                const handleData = (data) => {
+                    const { type, payload } = data;
+                    
+                    if (type === 'select_game') {
+                        enterGame(payload, false); // Enter game as guest
+                    } else if (type === 'game_move') {
+                        processGameMove(payload);
+                    } else if (type === 'reset_game') {
+                        resetGameLogic(currentGame.value);
+                    } else if (type === 'draw_line') {
+                        drawOnCanvas(payload);
+                    } else if (type === 'clear_canvas') {
+                        clearCanvas(false);
+                    }
+                };
+
+                // --- General UI Logic ---
+
+                const copyId = () => {
+                    navigator.clipboard.writeText(myPeerId.value);
+                    alert('ID 已复制');
+                };
+
+                const selectGame = (gameId) => {
+                    enterGame(gameId, true);
+                    sendData('select_game', gameId);
+                };
+
+                const enterGame = (gameId, isHost) => {
+                    currentGame.value = gameId;
+                    activeGameMeta.value = games.find(g => g.id === gameId);
+                    resetGameLogic(gameId, isHost);
+                    
+                    if (gameId === 'draw') {
+                        nextTick(() => initCanvas());
+                    }
+                };
+
+                const exitGame = () => {
+                    currentGame.value = null;
+                    sendData('select_game', null); // Simplified exit
+                };
+
+                const resetGame = () => {
+                    resetGameLogic(currentGame.value);
+                    sendData('reset_game', null);
+                };
+
+                // --- Specific Game Logic ---
+
+                const questions = ['喜欢猫还是狗?', '夏天还是冬天?', '火锅还是烧烤?', '早起还是晚睡?', '米饭还是面条?'];
+                const truthQuestions = ['你最喜欢我哪一点？', '如果不考虑金钱，你最想做什么？', '第一次见我对我的印象？', '做过最尴尬的事？'];
+                const loveQuotes = ['今天的你也是宇宙第一可爱', '想和你一起去吹晚风', '你是我所有的少女心事', '晚安，梦里见'];
+
+                const resetGameLogic = (gameId, isHost = true) => {
+                    // Reset states based on game
+                    if (gameId === 'telepathy') {
+                        const q = questions[Math.floor(Math.random() * questions.length)];
+                        gameState.telepathy = { 
+                            question: isHost ? q : gameState.telepathy.question, // Host sets question usually, simplified here
+                            myChoice: null, opChoice: null, match: false, result: false 
+                        };
+                        if(isHost) sendData('game_move', { type: 'set_q', val: q });
+                    }
+                    if (gameId === 'clickwar') {
+                        gameState.clickwar = { myScore: 0, opponentScore: 0, timeLeft: 10, playing: false };
+                    }
+                    if (gameId === 'dice') gameState.dice = { myRoll: null, opRoll: null, winner: null };
+                    if (gameId === 'reaction') {
+                         gameState.reaction = { status: 'waiting', message: '等待开始...', startTime: 0 };
+                         if(isHost) {
+                             setTimeout(() => {
+                                 sendData('game_move', { type: 'green' });
+                                 gameState.reaction.status = 'green';
+                                 gameState.reaction.startTime = Date.now();
+                                 gameState.reaction.message = '点！';
+                             }, 2000 + Math.random() * 3000);
+                         }
+                    }
+                    if (gameId === 'rps') gameState.rps = { myChoice: null, opChoice: null, opponentMoved: false, show: false, result: '' };
+                    if (gameId === 'truth') gameState.truth = { question: '点击按钮抽取题目' };
+                    if (gameId === 'sync') gameState.sync = { myTime: 0, opTime: 0, result: false, diff: 0 };
+                    if (gameId === 'guessnum') {
+                        // Simple role toggle logic or random
+                         gameState.guessnum = { role: isHost ? 'setter' : 'guesser', input: '', min: 1, max: 100, target: null, message: '请出题人设定数字' };
+                    }
+                    if (gameId === 'pill') gameState.pill = { opened: false, text: '' };
+                    
+                    if (gameId === 'draw') clearCanvas(false);
+                };
+
+                const processGameMove = (data) => {
+                    // Logic dispatcher
+                    if (currentGame.value === 'telepathy') {
+                        if (data.type === 'choice') gameState.telepathy.opChoice = data.val;
+                        if (data.type === 'set_q') gameState.telepathy.question = data.val;
+                        if (gameState.telepathy.myChoice && gameState.telepathy.opChoice) {
+                            gameState.telepathy.match = gameState.telepathy.myChoice === gameState.telepathy.opChoice;
+                            gameState.telepathy.result = true;
+                        }
+                    }
+                    else if (currentGame.value === 'clickwar') {
+                        if (data.type === 'start') startGameClick();
+                        if (data.type === 'score') gameState.clickwar.opponentScore = data.val;
+                    }
+                    else if (currentGame.value === 'dice') {
+                        if (data.type === 'roll') gameState.dice.opRoll = data.val;
+                        checkDiceWinner();
+                    }
+                    else if (currentGame.value === 'reaction') {
+                        if (data.type === 'green') {
+                            gameState.reaction.status = 'green';
+                            gameState.reaction.startTime = Date.now();
+                            gameState.reaction.message = '点！';
+                        }
+                        if (data.type === 'finish') {
+                            const opTime = data.time;
+                            const myTime = gameState.reaction.myTime;
+                            if (myTime) {
+                                const win = myTime < opTime;
+                                gameState.reaction.message = win ? `你赢了! (${myTime}ms vs ${opTime}ms)` : `你输了 (${myTime}ms vs ${opTime}ms)`;
+                            }
+                        }
+                    }
+                    else if (currentGame.value === 'rps') {
+                        if (data.type === 'choice') {
+                            gameState.rps.opChoice = data.val;
+                            gameState.rps.opponentMoved = true;
+                            checkRpsResult();
+                        }
+                    }
+                    else if (currentGame.value === 'truth') {
+                        if (data.type === 'q') gameState.truth.question = data.val;
+                    }
+                    else if (currentGame.value === 'sync') {
+                        if(data.type === 'down') { /* op pressed */ }
+                        if(data.type === 'up') { 
+                            gameState.sync.opTime = data.time; 
+                            checkSyncResult();
+                        }
+                    }
+                    else if (currentGame.value === 'guessnum') {
+                        if (data.type === 'set') {
+                            gameState.guessnum.target = data.val;
+                            gameState.guessnum.message = '对方已出题，请猜数字';
+                        }
+                        if (data.type === 'guess') {
+                            const g = data.val;
+                            if (g < gameState.guessnum.target) gameState.guessnum.message = `对方猜 ${g}，小了`;
+                            else if (g > gameState.guessnum.target) gameState.guessnum.message = `对方猜 ${g}，大了`;
+                            else gameState.guessnum.message = `对方猜对了！是 ${g}`;
+                        }
+                        if (data.type === 'feedback') gameState.guessnum.message = data.val;
+                    }
+                    else if (currentGame.value === 'pill') {
+                        if (data.type === 'text') {
+                            gameState.pill.text = data.val;
+                            gameState.pill.opened = true;
+                        }
+                    }
+                };
+
+                const sendGameMove = (action) => {
+                    if (currentGame.value === 'telepathy') {
+                        if(action === 'A' || action === 'B') {
+                            gameState.telepathy.myChoice = action;
+                            sendData('game_move', { type: 'choice', val: action });
+                            if(gameState.telepathy.opChoice) {
+                                gameState.telepathy.match = gameState.telepathy.myChoice === gameState.telepathy.opChoice;
+                                gameState.telepathy.result = true;
+                            }
+                        }
+                    }
+                    else if (currentGame.value === 'clickwar') {
+                        if(action === 'click') {
+                            if (!gameState.clickwar.playing) {
+                                sendData('game_move', { type: 'start' });
+                                startGameClick();
+                            } else {
+                                gameState.clickwar.myScore++;
+                                sendData('game_move', { type: 'score', val: gameState.clickwar.myScore });
+                            }
+                        }
+                    }
+                    else if (currentGame.value === 'dice') {
+                        const roll = Math.floor(Math.random() * 6) + 1;
+                        gameState.dice.myRoll = roll;
+                        sendData('game_move', { type: 'roll', val: roll });
+                        checkDiceWinner();
+                    }
+                    else if (currentGame.value === 'reaction') {
+                        if (gameState.reaction.status === 'green') {
+                            const time = Date.now() - gameState.reaction.startTime;
+                            gameState.reaction.myTime = time;
+                            gameState.reaction.status = 'finished';
+                            gameState.reaction.message = `耗时: ${time}ms (等待对方)`;
+                            sendData('game_move', { type: 'finish', time: time });
+                        } else if (gameState.reaction.status === 'waiting') {
+                            gameState.reaction.status = 'red';
+                            gameState.reaction.message = '太早了！犯规！';
+                        }
+                    }
+                    else if (currentGame.value === 'rps') {
+                        gameState.rps.myChoice = action;
+                        sendData('game_move', { type: 'choice', val: action });
+                        checkRpsResult();
+                    }
+                    else if (currentGame.value === 'truth') {
+                        const q = truthQuestions[Math.floor(Math.random() * truthQuestions.length)];
+                        gameState.truth.question = q;
+                        sendData('game_move', { type: 'q', val: q });
+                    }
+                    else if (currentGame.value === 'sync') {
+                        if(action === 'down') {
+                            sendData('game_move', { type: 'down' });
+                        } else if (action === 'up') {
+                            const now = Date.now();
+                            gameState.sync.myTime = now;
+                            sendData('game_move', { type: 'up', time: now });
+                            checkSyncResult();
+                        }
+                    }
+                    else if (currentGame.value === 'guessnum') {
+                        if(action === 'set') {
+                            const val = parseInt(gameState.guessnum.input);
+                            gameState.guessnum.target = val; // Only I know
+                            gameState.guessnum.message = '等待对方猜...';
+                            sendData('game_move', { type: 'set', val: val }); // In real security, dont send val yet, but ok here
+                        } else if (action === 'guess') {
+                            const val = parseInt(gameState.guessnum.input);
+                            sendData('game_move', { type: 'guess', val: val });
+                            // Wait for feedback logic or local check if we trusted client
+                        }
+                    }
+                    else if (currentGame.value === 'pill') {
+                        const t = loveQuotes[Math.floor(Math.random() * loveQuotes.length)];
+                        gameState.pill.text = t;
+                        gameState.pill.opened = true;
+                        sendData('game_move', { type: 'text', val: t });
+                    }
+                };
+
+                // Helpers
+                const checkDiceWinner = () => {
+                    if (gameState.dice.myRoll && gameState.dice.opRoll) {
+                        if (gameState.dice.myRoll > gameState.dice.opRoll) gameState.dice.winner = 'me';
+                        else if (gameState.dice.myRoll < gameState.dice.opRoll) gameState.dice.winner = 'op';
+                        else gameState.dice.winner = 'tie';
+                    }
+                };
+
+                const startGameClick = () => {
+                    gameState.clickwar.playing = true;
+                    gameState.clickwar.myScore = 0;
+                    gameState.clickwar.opponentScore = 0;
+                    gameState.clickwar.timeLeft = 10;
+                    const timer = setInterval(() => {
+                        gameState.clickwar.timeLeft--;
+                        if(gameState.clickwar.timeLeft <= 0) {
+                            clearInterval(timer);
+                            gameState.clickwar.playing = false;
+                        }
+                    }, 1000);
+                };
+
+                const checkRpsResult = () => {
+                    if (gameState.rps.myChoice && gameState.rps.opChoice) {
+                        gameState.rps.show = true;
+                        const m = gameState.rps.myChoice;
+                        const o = gameState.rps.opChoice;
+                        if(m===o) gameState.rps.result = '平局';
+                        else if((m==='✊'&&o==='✌️') || (m==='✌️'&&o==='🖐️') || (m==='🖐️'&&o==='✊')) gameState.rps.result = '你赢了!';
+                        else gameState.rps.result = '你输了!';
+                    }
+                };
+
+                const checkSyncResult = () => {
+                    if(gameState.sync.myTime && gameState.sync.opTime) {
+                        const diff = Math.abs(gameState.sync.myTime - gameState.sync.opTime);
+                        gameState.sync.diff = diff;
+                        gameState.sync.result = true;
+                    }
+                }
+
+                // --- Canvas Logic ---
+                const initCanvas = () => {
+                    const canvas = drawCanvas.value;
+                    if(!canvas) return;
+                    canvas.width = canvas.offsetWidth;
+                    canvas.height = canvas.offsetHeight;
+                    ctx = canvas.getContext('2d');
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 3;
+                    ctx.lineCap = 'round';
+                };
+
+                let isDrawing = false;
+                let lastPos = {x:0, y:0};
+
+                const startDraw = (e) => {
+                    isDrawing = true;
+                    const pos = getPos(e);
+                    lastPos = pos;
+                };
+
+                const drawing = (e) => {
+                    if(!isDrawing) return;
+                    const pos = getPos(e);
+                    drawLine(lastPos, pos);
+                    sendData('draw_line', { from: lastPos, to: pos });
+                    lastPos = pos;
+                };
+
+                const endDraw = () => { isDrawing = false; };
+
+                const getPos = (e) => {
+                    const rect = drawCanvas.value.getBoundingClientRect();
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                    return {
+                        x: clientX - rect.left,
+                        y: clientY - rect.top
+                    };
+                };
+
+                const drawLine = (from, to) => {
+                    if(!ctx) return;
+                    ctx.beginPath();
+                    ctx.moveTo(from.x, from.y);
+                    ctx.lineTo(to.x, to.y);
+                    ctx.stroke();
+                };
+
+                const drawOnCanvas = (data) => {
+                    if(!ctx) return;
+                    drawLine(data.from, data.to);
+                };
+
+                const clearCanvas = (sync = true) => {
+                    if(!ctx && drawCanvas.value) ctx = drawCanvas.value.getContext('2d');
+                    if(ctx) ctx.clearRect(0, 0, drawCanvas.value.width, drawCanvas.value.height);
+                    if(sync) sendData('clear_canvas');
+                };
+
+
+                return {
+                    myPeerId, targetPeerId, isConnected,
+                    copyId, connectToPeer,
+                    games, currentGame, activeGameMeta, selectGame, exitGame,
+                    gameState, sendGameMove, resetGame,
+                    drawCanvas, startDraw, drawing, endDraw, clearCanvas
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
