@@ -24,6 +24,9 @@
             overflow-x: hidden;
             -webkit-tap-highlight-color: transparent;
             user-select: none;
+            height: 100vh;
+            position: fixed;
+            width: 100%;
         }
 
         /* Sweet Gradient Background */
@@ -84,6 +87,30 @@
             transform: translateY(4px);
             box-shadow: none;
         }
+        
+        /* 修复游戏区域滚动问题 */
+        .game-container {
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            height: 100%;
+            position: relative;
+        }
+        
+        /* 修复触摸事件 */
+        .touch-none {
+            touch-action: manipulation;
+        }
+        
+        /* 3D 翻转效果 */
+        .preserve-3d {
+            transform-style: preserve-3d;
+        }
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -101,7 +128,7 @@
     <div id="app-container" class="flex-grow flex flex-col relative w-full max-w-lg mx-auto h-screen overflow-hidden">
         
         <!-- SCREEN 1: LOGIN / CONNECT -->
-        <section id="screen-connect" class="flex flex-col h-full justify-center p-6 space-y-8 z-10">
+        <section id="screen-connect" class="flex flex-col h-full justify-center p-6 space-y-8 z-10 game-container">
             <div class="text-center space-y-3 mb-6 slide-up">
                 <div class="w-28 h-28 bg-white/80 backdrop-blur rounded-[2rem] mx-auto shadow-xl flex items-center justify-center text-6xl mb-4 pulse-slow">
                     💖
@@ -130,7 +157,7 @@
         </section>
 
         <!-- SCREEN 2: LOBBY -->
-        <section id="screen-lobby" class="hidden flex-col h-full p-4 z-10">
+        <section id="screen-lobby" class="hidden flex-col h-full p-4 z-10 game-container">
             <!-- Header -->
             <div class="flex justify-between items-center mb-6 pt-4 px-2">
                 <div class="flex items-center gap-3">
@@ -159,7 +186,7 @@
         </section>
 
         <!-- SCREEN 3: GAME CONTAINER -->
-        <section id="screen-game" class="hidden flex-col h-full z-20 absolute inset-0 bg-[#F2F2F7]">
+        <section id="screen-game" class="hidden flex-col h-full z-20 absolute inset-0 bg-[#F2F2F7] game-container">
             <!-- Game Header -->
             <div class="flex items-center justify-between p-4 bg-white/80 backdrop-blur-md border-b border-gray-200/50 shadow-sm z-30">
                 <button onclick="gameManager.exitGame()" class="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
@@ -286,6 +313,8 @@
             
             init() {
                 this.renderLobby();
+                // 添加触摸事件优化
+                document.addEventListener('touchstart', function() {}, {passive: true});
             },
 
             showToast(msg, icon='🔔') {
@@ -597,7 +626,7 @@
                             { n: 'E4', f: 329.63, c: 'bg-yellow-100 text-yellow-500' },
                             { n: 'G4', f: 392.00, c: 'bg-green-100 text-green-500' },
                             { n: 'A4', f: 440.00, c: 'bg-blue-100 text-blue-500' },
-                            { n: 'C5', f: 523.25, c: 'bg-purple-100 text-purple-500' }
+                            { n: 'C5', f: 523.25, c: 'bg-purple-100 text-purple-600' }
                         ];
                         
                         // Audio Context Setup
@@ -673,7 +702,7 @@
                         
                         const area = document.getElementById('touch-area');
                         
-                        // Event Listeners
+                        // Event Listeners - 优化触摸事件
                         const handleTouch = (e) => {
                             e.preventDefault();
                             const rect = area.getBoundingClientRect();
@@ -700,9 +729,18 @@
                         };
                         
                         area.addEventListener('mousedown', handleTouch);
-                        area.addEventListener('touchstart', handleTouch);
-                        area.addEventListener('mousemove', (e) => { if(!this.isPlacing && this.target && (e.buttons||e.touches)) handleTouch(e); });
-                        area.addEventListener('touchmove', handleTouch);
+                        area.addEventListener('touchstart', handleTouch, {passive: false});
+                        
+                        // 添加触摸移动事件
+                        const handleMove = (e) => {
+                            if(!this.isPlacing && this.target && (e.buttons || e.touches)) {
+                                e.preventDefault();
+                                handleTouch(e);
+                            }
+                        };
+                        
+                        area.addEventListener('mousemove', handleMove);
+                        area.addEventListener('touchmove', handleMove, {passive: false});
                     },
                     checkDistance(x, y) {
                         if(!this.target) return;
@@ -821,6 +859,18 @@
                                 gameManager.showResult('win', "你的手速太快了！", true);
                             }
                         };
+                        
+                        // 添加触摸事件
+                        document.getElementById('click-btn').addEventListener('touchstart', (e) => {
+                            e.preventDefault();
+                            this.score++;
+                            const pct = Math.min(this.score * 2.5, 100);
+                            document.getElementById('click-fill').style.height = `${pct}%`;
+                            if(this.score >= 40) {
+                                gameManager.sendGameData({ type: 'WIN' });
+                                gameManager.showResult('win', "你的手速太快了！", true);
+                            }
+                        }, {passive: false});
                     },
                     onData(d) {
                         if(d.type === 'WIN') gameManager.showResult('lose', "对方先填满了爱心！", true);
@@ -841,8 +891,16 @@
                         `;
                         const canvas = document.getElementById('draw-canvas');
                         const ctx = canvas.getContext('2d');
-                        canvas.width = container.clientWidth;
-                        canvas.height = container.clientHeight - 50;
+                        
+                        // 设置canvas尺寸
+                        const resizeCanvas = () => {
+                            const rect = canvas.getBoundingClientRect();
+                            canvas.width = rect.width;
+                            canvas.height = rect.height;
+                        };
+                        resizeCanvas();
+                        window.addEventListener('resize', resizeCanvas);
+                        
                         this.ctx = ctx;
                         this.isDrawing = false;
                         
@@ -855,6 +913,7 @@
                         };
 
                         const start = (e) => {
+                            e.preventDefault();
                             const pos = getPos(e);
                             this.isDrawing = true;
                             this.lastPos = pos;
@@ -873,8 +932,8 @@
                         canvas.addEventListener('mousedown', start);
                         canvas.addEventListener('mousemove', move);
                         canvas.addEventListener('mouseup', end);
-                        canvas.addEventListener('touchstart', start);
-                        canvas.addEventListener('touchmove', move);
+                        canvas.addEventListener('touchstart', start, {passive: false});
+                        canvas.addEventListener('touchmove', move, {passive: false});
                         canvas.addEventListener('touchend', end);
                     },
                     draw(x1, y1, x2, y2, color) {
