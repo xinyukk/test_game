@@ -1,0 +1,22 @@
+```
+# Dependencies
+node_modules/
+
+# Editors
+.vscode/
+
+# Build artifacts
+dist/
+build/
+*.min.js
+*.min.css
+*.bundle.js
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local
+*.env.*
+```
