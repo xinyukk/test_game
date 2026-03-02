@@ -48,8 +48,8 @@
             height: 100%; justify-content: center;
         }
         
-        #login-screen h1 { font-size: 30px; color: var(--secondary); display: flex; align-items: center; justify-content: center; gap: 10px; }
-        #login-screen p.subtitle { color: var(--text-light); font-size: 15px; line-height: 1.5; }
+        #login-screen h1 { font-size: 28px; color: var(--secondary); display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 5px; }
+        #login-screen p.subtitle { color: var(--text-light); font-size: 14px; line-height: 1.5; }
         
         .input-group { display: flex; flex-direction: column; gap: 12px; }
         .input-field {
@@ -57,7 +57,6 @@
             border-radius: var(--border-radius); font-size: 16px; transition: var(--transition);
         }
         .input-field:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.2); }
-        .input-field.readonly { background: #e9ecef; color: #6c757d; border-color: #ced4da; cursor: not-allowed; }
 
         .btn-group { display: flex; flex-direction: column; gap: 12px; }
         
@@ -87,7 +86,8 @@
         }
         .header-title { display: flex; flex-direction: column; align-items: flex-start; }
         .header-title .title { font-size: 17px; font-weight: 600; }
-        .room-id { font-size: 13px; opacity: 0.9; margin-top: 4px; letter-spacing: 1px; background: rgba(0,0,0,0.2); padding: 2px 8px; border-radius: 10px; }
+        .room-id { font-size: 13px; opacity: 0.9; margin-top: 4px; letter-spacing: 1px; background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 10px; cursor: pointer; }
+        .room-id:hover { background: rgba(0,0,0,0.4); }
         
         .header-actions { display: flex; gap: 10px; align-items: center; }
         .icon-btn {
@@ -108,13 +108,13 @@
         .message {
             max-width: 85%; padding: 12px 16px; border-radius: var(--border-radius);
             font-size: 15px; line-height: 1.45; position: relative;
-            animation: fadeIn 0.3s ease; box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            animation: fadeIn 0.3s ease; box-shadow: 0 2px 6px rgba(0,0,0,0.05); word-wrap: break-word;
         }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
         .msg-me { align-self: flex-end; background: var(--primary); color: white; border-bottom-right-radius: 4px; }
         .msg-friend { align-self: flex-start; background: white; border-bottom-left-radius: 4px; border: 1px solid #e1e6eb; }
-        .msg-system { align-self: center; background: rgba(0,0,0,0.05); color: var(--text-light); font-size: 13px; border-radius: 20px; padding: 6px 14px; margin: 5px 0; box-shadow: none; text-align: center; }
+        .msg-system { align-self: center; background: rgba(0,0,0,0.08); color: var(--text-light); font-size: 13px; border-radius: 20px; padding: 6px 14px; margin: 5px 0; box-shadow: none; text-align: center; }
         
         .msg-name { font-size: 12px; opacity: 0.8; margin-bottom: 4px; display: flex; justify-content: space-between; gap: 15px; }
         
@@ -137,8 +137,6 @@
         .empty-state { text-align: center; color: var(--text-light); padding: 40px 20px; line-height: 1.6; }
         .empty-state i { font-size: 40px; margin-bottom: 15px; color: #bdc3c7; }
 
-        .hidden { display: none !important; }
-
         @media (max-width: 480px) {
             .app-container { height: 100vh; border-radius: 0; }
             .chat-header { padding: 12px 15px; }
@@ -152,15 +150,15 @@
             <p class="subtitle" id="welcome-text">🔐 端到端加密 · 无需服务器保存记录</p>
             
             <div class="input-group">
-                <input type="text" id="username" class="input-field" placeholder="输入你的昵称" maxlength="10">
-                <input type="text" id="password" class="input-field" placeholder="房间口令 (留空则自动生成)" maxlength="12">
+                <input type="text" id="username" class="input-field" placeholder="输入你的昵称 (必填)" maxlength="10">
+                <input type="text" id="password" class="input-field" placeholder="输入房间口令 (留空则自动生成)" maxlength="15">
             </div>
             
             <div class="btn-group" id="action-buttons">
-                <button class="btn btn-create" id="btn-create" onclick="createRoom()">
+                <button class="btn btn-create" onclick="createRoom()">
                     <i class="fas fa-door-open"></i> 创建新房间
                 </button>
-                <button class="btn btn-join" id="btn-join" onclick="joinRoom()">
+                <button class="btn btn-join" onclick="joinRoom()">
                     <i class="fas fa-user-friends"></i> 加入房间
                 </button>
             </div>
@@ -168,7 +166,7 @@
             <div id="login-status" class="status"></div>
             
             <p style="color: var(--text-light); font-size: 12px; margin-top: 10px;">
-                <i class="fas fa-info-circle"></i> 创建房间后可一键复制链接邀请好友
+                <i class="fas fa-volume-up"></i> 点击按钮后会有语音提示，代表语音权限已开启
             </p>
         </div>
 
@@ -176,15 +174,12 @@
             <div class="chat-header">
                 <div class="header-title">
                     <div class="title">🔒 私密聊天室</div>
-                    <div class="room-id" onclick="shareRoom()" style="cursor: pointer;" title="点击复制口令">
-                        口令: <span id="header-pwd"></span> <i class="fas fa-copy"></i>
+                    <div class="room-id" onclick="shareRoom()" title="点击复制房间链接">
+                        口令: <span id="header-pwd"></span> <i class="fas fa-copy" style="margin-left: 5px;"></i>
                     </div>
                 </div>
                 <div class="header-actions">
-                    <button id="share-btn" class="icon-btn" onclick="shareRoom()" title="分享邀请链接">
-                        <i class="fas fa-share-alt"></i>
-                    </button>
-                    <button id="voice-toggle" class="icon-btn active" onclick="toggleVoice()" title="关闭语音播报">
+                    <button id="voice-toggle" class="icon-btn active" onclick="toggleVoice()" title="关闭/开启语音">
                         <i class="fas fa-volume-up"></i>
                     </button>
                     <button class="icon-btn exit-btn" onclick="exitChat()" title="退出房间">
@@ -206,12 +201,13 @@
 
     <script>
         // 全局配置与状态
-        const ROOM_PREFIX = 'p2p-tts-chat-v3-';
+        const ROOM_PREFIX = 'p2p-tts-chat-v4-'; // 更改前缀防止旧缓存冲突
         let peer = null;
         let conn = null;
         let myName = '';
         let roomPassword = '';
         let isVoiceEnabled = true;
+        let isAudioUnlocked = false; // 记录音频是否成功解锁
         const synth = window.speechSynthesis;
 
         // UI 缓存
@@ -225,39 +221,45 @@
 
         // 页面初始化
         document.addEventListener('DOMContentLoaded', () => {
-            // 检查是否通过分享链接进入
+            // 检查 URL 参数，预填房间口令
             const urlParams = new URLSearchParams(window.location.search);
             const inviteRoom = urlParams.get('room');
             
             if (inviteRoom) {
                 pwdInput.value = inviteRoom;
-                pwdInput.classList.add('readonly');
-                pwdInput.readOnly = true;
-                document.getElementById('welcome-text').innerHTML = '👋 你收到了一份私密聊天邀请';
-                document.getElementById('btn-create').classList.add('hidden'); // 隐藏创建按钮
+                document.getElementById('welcome-text').innerHTML = '👋 你收到了一份私密聊天邀请<br>输入昵称并点击"加入房间"';
+                // 我们不再隐藏"创建按钮"和锁定输入框，让用户有完全的控制权
             }
 
             // 绑定回车发送
             msgInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') sendMessage();
             });
+            
+            // 尝试预加载语音列表 (解决有些手机首次调取慢的问题)
+            if ('speechSynthesis' in window) {
+                synth.getVoices();
+            }
         });
 
-        // 生成随机口令
-        function generateRandomCode() {
-            return Math.random().toString(36).substring(2, 8).toUpperCase();
+        // ==========================================
+        // 核心改动：实打实的播报提示音来彻底解锁权限
+        // ==========================================
+        function explicitUnlockAudio() {
+            if (!isAudioUnlocked && 'speechSynthesis' in window) {
+                synth.cancel(); // 清除排队
+                const utterance = new SpeechSynthesisUtterance('启动中');
+                utterance.volume = 0.5; // 设置适中音量，让用户明确听到
+                utterance.rate = 1.3;
+                utterance.lang = 'zh-CN';
+                synth.speak(utterance);
+                isAudioUnlocked = true;
+            }
         }
 
-        // ==========================================
-        // 核心黑科技：强制解锁手机端音频引擎
-        // 必须在用户发生真实的点击行为时触发
-        // ==========================================
-        function unlockAudioEngine() {
-            if ('speechSynthesis' in window) {
-                const unlockMsg = new SpeechSynthesisUtterance('');
-                unlockMsg.volume = 0; // 静音播报，仅用于获取权限
-                synth.speak(unlockMsg);
-            }
+        // 随机口令生成
+        function generateRandomCode() {
+            return Math.random().toString(36).substring(2, 8).toUpperCase();
         }
 
         // 创建房间 (Host)
@@ -265,7 +267,7 @@
             myName = document.getElementById('username').value.trim();
             if (!myName) return showStatus('❌ 请先输入您的昵称', 'error');
 
-            unlockAudioEngine(); // 解锁语音
+            explicitUnlockAudio(); // 点击瞬间强制请求并发声
 
             let rawPwd = pwdInput.value.trim();
             if (!rawPwd) {
@@ -287,9 +289,9 @@
             if (!myName) return showStatus('❌ 请先输入您的昵称', 'error');
             if (!roomPassword) return showStatus('❌ 请输入要加入的房间口令', 'error');
 
-            unlockAudioEngine(); // 解锁语音
+            explicitUnlockAudio(); // 点击瞬间强制请求并发声
 
-            showStatus('🔍 正在寻找房间...', 'info');
+            showStatus('🔍 正在连接房间...', 'info');
             initPeer(null, false);
         }
 
@@ -298,21 +300,17 @@
             cleanupPeer();
 
             // 使用公共 STUN 服务器提升连通率
-            peer = peerId ? new Peer(peerId, {
+            const peerConfig = {
                 config: {
                     iceServers: [
                         { url: 'stun:stun.l.google.com:19302' },
-                        { url: 'stun:stun1.l.google.com:19302' }
+                        { url: 'stun:stun1.l.google.com:19302' },
+                        { url: 'stun:stun.qq.com:3478' } // 增加国内节点
                     ]
                 }
-            }) : new Peer({
-                config: {
-                    iceServers: [
-                        { url: 'stun:stun.l.google.com:19302' },
-                        { url: 'stun:stun1.l.google.com:19302' }
-                    ]
-                }
-            });
+            };
+
+            peer = peerId ? new Peer(peerId, peerConfig) : new Peer(peerConfig);
 
             peer.on('open', (id) => {
                 if (isHost) {
@@ -356,7 +354,7 @@
             connection.on('open', () => {
                 if (role === 'guest') enterChatUI(false);
                 
-                // 清理等待界面的空状态
+                // 清除等待画面
                 const emptyState = chatBox.querySelector('.empty-state');
                 if (emptyState) emptyState.remove();
 
@@ -371,7 +369,7 @@
             connection.on('data', (data) => {
                 if (data.type === 'chat') {
                     appendMessage(data.name, data.text, 'friend');
-                    if (isVoiceEnabled) speakText(data.text);
+                    if (isVoiceEnabled) speakText(data.text); // 收信并播报
                 } else if (data.type === 'system') {
                     appendMessage('系统', data.text, 'system');
                 }
@@ -383,7 +381,7 @@
             });
         }
 
-        // 切换到聊天界面
+        // 切换到聊天UI
         function enterChatUI(isHost) {
             loginScreen.style.display = 'none';
             chatScreen.style.display = 'flex';
@@ -394,10 +392,10 @@
                 chatBox.innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-user-clock"></i>
-                        <p>房间创建成功！等待对方加入...<br><br>
-                        <button onclick="shareRoom()" style="padding:10px 20px; border-radius:20px; border:none; background:var(--primary); color:white; cursor:pointer;">
-                            <i class="fas fa-share-alt"></i> 点击一键复制邀请链接
-                        </button></p>
+                        <p style="margin-bottom: 15px;">房间创建成功！等待对方加入...</p>
+                        <button onclick="shareRoom()" style="padding:12px 24px; font-size: 16px; border-radius:25px; border:none; background:var(--primary); color:white; cursor:pointer; box-shadow: 0 4px 10px rgba(37, 211, 102, 0.3);">
+                            <i class="fas fa-share-alt"></i> 点击复制邀请链接
+                        </button>
                     </div>`;
             } else {
                 chatBox.innerHTML = `
@@ -406,14 +404,17 @@
                         <p>正在连接房主...</p>
                     </div>`;
             }
-            setTimeout(() => msgInput.focus(), 300);
+            // 延迟聚焦，防止在移动端立刻弹出键盘影响体验
+            setTimeout(() => {
+                if(window.innerWidth > 480) msgInput.focus();
+            }, 300);
         }
 
         // 发送消息
         function sendMessage() {
             const text = msgInput.value.trim();
             if (!text || !conn || !conn.open) {
-                if(!conn) alert('尚未连接成功，请等待或分享链接邀请好友。');
+                if(!conn) alert('尚未连接成功，请分享链接邀请好友。');
                 return;
             }
 
@@ -421,10 +422,10 @@
             conn.send({ type: 'chat', name: myName, text: text });
             
             msgInput.value = '';
-            msgInput.focus();
+            if(window.innerWidth > 480) msgInput.focus();
         }
 
-        // UI 渲染消息
+        // 追加消息到界面
         function appendMessage(sender, text, type) {
             const msgDiv = document.createElement('div');
             msgDiv.className = `message msg-${type}`;
@@ -441,15 +442,14 @@
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        // 分享逻辑：复制带有参数的 URL 到剪贴板
+        // 分享链接复制
         function shareRoom() {
             const baseUrl = window.location.origin + window.location.pathname;
             const shareUrl = `${baseUrl}?room=${roomPassword}`;
             
-            // 使用现代浏览器的 Clipboard API
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(shareUrl).then(() => {
-                    alert(`✅ 邀请链接已复制！\n直接发给好友，对方打开即可加入。\n口令：${roomPassword}`);
+                    alert(`✅ 邀请链接已复制！\n发给好友即可直接加入。\n\n口令：${roomPassword}`);
                 }).catch(err => {
                     prompt("请手动复制以下链接：", shareUrl);
                 });
@@ -458,12 +458,14 @@
             }
         }
 
-        // 语音播报开关
+        // 语音开关逻辑
         function toggleVoice() {
             isVoiceEnabled = !isVoiceEnabled;
             if (isVoiceEnabled) {
                 voiceToggleBtn.classList.add('active');
                 voiceToggleBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+                // 用户手动点击开启语音，也可以作为一次彻底的权限唤醒
+                explicitUnlockAudio(); 
                 speakText("语音播报已开启");
             } else {
                 voiceToggleBtn.classList.remove('active');
@@ -472,40 +474,37 @@
             }
         }
 
-        // 执行播报
+        // 播报消息
         function speakText(text) {
-            if (!text || text.includes('成功连接')) return;
-            if (synth.speaking) synth.cancel();
+            if (!text) return;
+            if (synth.speaking) synth.cancel(); // 停掉上一句，播放最新的
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'zh-CN';
-            utterance.rate = 1.1;
+            utterance.rate = 1.1; // 语速微调，更自然
+            utterance.volume = 1.0;
             synth.speak(utterance);
         }
 
-        // 退出房间
+        // 退出逻辑
         function exitChat() {
             if (confirm('确定要退出当前房间吗？')) {
                 cleanupPeer();
-                // 清理 URL 参数
                 window.history.replaceState({}, document.title, window.location.pathname);
                 chatScreen.style.display = 'none';
                 loginScreen.style.display = 'flex';
-                document.getElementById('btn-create').classList.remove('hidden');
-                pwdInput.classList.remove('readonly');
-                pwdInput.readOnly = false;
                 pwdInput.value = '';
                 document.getElementById('welcome-text').innerHTML = '🔐 端到端加密 · 无需服务器保存记录';
                 showStatus('已退出房间', 'info', 2000);
             }
         }
 
-        // 销毁连接
+        // 销毁 P2P
         function cleanupPeer() {
             if (conn) { try { conn.close(); } catch (e) {} conn = null; }
             if (peer) { try { peer.destroy(); } catch (e) {} peer = null; }
         }
 
-        // 状态提示条
+        // 提示条
         function showStatus(msg, type, duration = 3000) {
             loginStatus.textContent = msg;
             loginStatus.className = `status ${type}`;
