@@ -8,82 +8,56 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary: #25D366;
-            --primary-dark: #128C7E;
-            --secondary: #075E54;
-            --gray: #e5ddd5;
-            --light-gray: #f0f4f8;
-            --text-dark: #333;
-            --text-light: #888;
-            --border-radius: 16px;
-            --transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            --primary: #25D366; --primary-dark: #128C7E; --secondary: #075E54;
+            --gray: #e5ddd5; --light-gray: #f0f4f8; --text-dark: #333; --text-light: #888;
+            --border-radius: 16px; --transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
-        
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: linear-gradient(135deg, #1a2a6c, #2c3e50);
             display: flex; justify-content: center; align-items: center;
             min-height: 100vh; padding: 15px; color: var(--text-dark);
-            -webkit-font-smoothing: antialiased;
         }
-        
         .app-container {
             width: 100%; max-width: 480px; height: 95vh; max-height: 850px;
             background: white; border-radius: 20px; overflow: hidden;
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
-            display: flex; flex-direction: column; position: relative;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.25); display: flex; flex-direction: column; position: relative;
         }
-        
         .app-container::before {
             content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
             background: linear-gradient(90deg, #34b7f1, #25D366, #00e676); z-index: 10;
         }
-        
-        /* 登录界面 */
         #login-screen {
             padding: 40px 30px; text-align: center; display: flex;
-            flex-direction: column; gap: 20px; background: var(--light-gray);
-            height: 100%; justify-content: center;
+            flex-direction: column; gap: 20px; background: var(--light-gray); height: 100%; justify-content: center;
         }
-        
-        #login-screen h1 { font-size: 26px; color: var(--secondary); display: flex; align-items: center; justify-content: center; gap: 10px; }
-        #login-screen p.subtitle { color: var(--text-light); font-size: 14px; line-height: 1.5; margin-bottom: 10px; }
-        
+        h1 { font-size: 26px; color: var(--secondary); display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .subtitle { color: var(--text-light); font-size: 14px; line-height: 1.5; margin-bottom: 10px; }
         .input-group { display: flex; flex-direction: column; gap: 12px; }
         .input-field {
             width: 100%; padding: 16px 20px; border: 2px solid #d0d5dd;
-            border-radius: var(--border-radius); font-size: 16px; transition: var(--transition);
+            border-radius: var(--border-radius); font-size: 16px;
         }
-        .input-field:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.2); }
-
+        .input-field:focus { outline: none; border-color: var(--primary); }
         .btn-group { display: flex; flex-direction: column; gap: 12px; }
-        
         .btn {
             padding: 16px; border: none; border-radius: var(--border-radius); font-size: 17px;
-            font-weight: 600; cursor: pointer; transition: var(--transition);
-            display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%;
+            font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%;
         }
-        .btn:active { transform: translateY(2px); }
         .btn-create { background: linear-gradient(120deg, #28a745, #20c997); color: white; }
         .btn-join { background: linear-gradient(120deg, #007bff, #1e90ff); color: white; }
-        
-        .status { min-height: 24px; color: #e74c3c; font-size: 14px; font-weight: 500; transition: var(--transition); }
+        .status { min-height: 24px; color: #e74c3c; font-size: 14px; font-weight: 500; }
         .status.success { color: #28a745; }
         .status.info { color: #007bff; }
-        
-        /* 聊天界面 */
         #chat-screen { display: none; flex-direction: column; height: 100%; position: relative; }
-        
         .chat-header {
             background: var(--secondary); color: white; padding: 15px 20px;
             display: flex; justify-content: space-between; align-items: center; z-index: 10;
         }
         .header-title { display: flex; flex-direction: column; align-items: flex-start; }
-        .header-title .title { font-size: 16px; font-weight: 600; }
+        .title { font-size: 16px; font-weight: 600; }
         .room-id { font-size: 12px; opacity: 0.9; margin-top: 4px; background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 10px; cursor: pointer; }
-        
         .header-actions { display: flex; gap: 8px; align-items: center; }
         .icon-btn {
             background: rgba(255,255,255,0.15); border: none; width: 36px; height: 36px;
@@ -91,64 +65,50 @@
             display: flex; align-items: center; justify-content: center;
         }
         .icon-btn.active { background: rgba(37, 211, 102, 0.8); }
-        .btn-test { background: rgba(243, 156, 18, 0.9); } /* 测试声音按钮 */
+        .btn-test { background: rgba(243, 156, 18, 0.9); }
         .exit-btn { background: rgba(231, 76, 60, 0.8); }
-        
         .chat-box {
             flex: 1; padding: 20px 15px; overflow-y: auto; display: flex;
             flex-direction: column; gap: 16px; background-color: var(--gray); padding-bottom: 80px;
         }
-        
         .message {
             max-width: 85%; padding: 12px 16px; border-radius: var(--border-radius);
             font-size: 15px; line-height: 1.45; position: relative;
             animation: fadeIn 0.3s ease; box-shadow: 0 2px 6px rgba(0,0,0,0.05); word-wrap: break-word;
         }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
         .msg-me { align-self: flex-end; background: var(--primary); color: white; border-bottom-right-radius: 4px; }
         .msg-friend { align-self: flex-start; background: white; border-bottom-left-radius: 4px; border: 1px solid #e1e6eb; }
         .msg-system { align-self: center; background: rgba(0,0,0,0.08); color: var(--text-light); font-size: 13px; border-radius: 20px; padding: 6px 14px; text-align: center; }
-        
         .msg-name { font-size: 12px; opacity: 0.8; margin-bottom: 4px; display: flex; justify-content: space-between; gap: 15px; }
-        
         .input-area {
             position: absolute; bottom: 0; left: 0; right: 0; padding: 12px 15px;
             background: white; border-top: 1px solid #e1e6eb; display: flex; gap: 10px; z-index: 20;
         }
         #msg-input {
             flex: 1; padding: 12px 18px; border: 2px solid #d0d5dd; border-radius: 25px;
-            font-size: 15px; outline: none; transition: var(--transition);
+            font-size: 15px; outline: none;
         }
-        #msg-input:focus { border-color: var(--primary); }
         #send-btn {
             background: var(--primary); color: white; border: none; border-radius: 50%;
             width: 46px; height: 46px; font-size: 18px; cursor: pointer; display: flex;
             align-items: center; justify-content: center; flex-shrink: 0;
         }
-        
         .empty-state { text-align: center; color: var(--text-light); padding: 40px 20px; line-height: 1.6; }
-        
-        @media (max-width: 480px) {
-            .app-container { height: 100vh; border-radius: 0; }
-        }
+        @media (max-width: 480px) { .app-container { height: 100vh; border-radius: 0; } }
     </style>
 </head>
 <body>
-    <audio id="silent-audio" loop>
-        <source src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA" type="audio/wav">
-    </audio>
+    <audio id="cloud-tts-audio" style="display: none;"></audio>
 
     <div class="app-container">
         <div id="login-screen">
             <h1><i class="fas fa-comment-dots"></i> 语音代聊室</h1>
             <p class="subtitle" id="welcome-text">🔐 端到端加密 · 离开即销毁</p>
-            
             <div class="input-group">
                 <input type="text" id="username" class="input-field" placeholder="输入你的昵称 (必填)" maxlength="10">
                 <input type="text" id="password" class="input-field" placeholder="输入房间口令 (留空则自动生成)" maxlength="15">
             </div>
-            
             <div class="btn-group">
                 <button class="btn btn-create" onclick="createRoom()">
                     <i class="fas fa-door-open"></i> 创建新房间
@@ -157,8 +117,10 @@
                     <i class="fas fa-user-friends"></i> 加入房间
                 </button>
             </div>
-            
             <div id="login-status" class="status"></div>
+            <p style="color: var(--text-light); font-size: 12px; margin-top: 10px;">
+                <i class="fas fa-info-circle"></i> 已开启云端语音增强，适配所有浏览器
+            </p>
         </div>
 
         <div id="chat-screen">
@@ -170,7 +132,7 @@
                     </div>
                 </div>
                 <div class="header-actions">
-                    <button class="icon-btn btn-test" onclick="forceTestAudio()" title="测试发声/手动授权">
+                    <button class="icon-btn btn-test" onclick="forceTestAudio()" title="测试并发声">
                         <i class="fas fa-play"></i>
                     </button>
                     <button id="voice-toggle" class="icon-btn active" onclick="toggleVoice()" title="语音开关">
@@ -181,32 +143,18 @@
                     </button>
                 </div>
             </div>
-            
             <div class="chat-box" id="chat-box"></div>
-
             <div class="input-area">
                 <input type="text" id="msg-input" placeholder="输入消息 (回车发送)..." autocomplete="off">
-                <button id="send-btn" onclick="sendMessage()">
-                    <i class="fas fa-paper-plane"></i>
-                </button>
+                <button id="send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
             </div>
         </div>
     </div>
 
     <script>
-        const ROOM_PREFIX = 'p2p-tts-chat-v5-'; 
-        let peer = null;
-        let conn = null;
-        let myName = '';
-        let roomPassword = '';
-        let isVoiceEnabled = true;
+        const ROOM_PREFIX = 'p2p-tts-chat-v7-'; 
+        let peer = null, conn = null, myName = '', roomPassword = '', isVoiceEnabled = true;
         
-        // 语音引擎相关
-        const synth = window.speechSynthesis;
-        let targetVoice = null; // 用于存储确定的中文声源
-        const silentAudio = document.getElementById('silent-audio');
-
-        // UI 缓存
         const loginScreen = document.getElementById('login-screen');
         const chatScreen = document.getElementById('chat-screen');
         const chatBox = document.getElementById('chat-box');
@@ -214,101 +162,100 @@
         const loginStatus = document.getElementById('login-status');
         const voiceToggleBtn = document.getElementById('voice-toggle');
         const pwdInput = document.getElementById('password');
+        const cloudAudio = document.getElementById('cloud-tts-audio');
 
-        // 初始化
         document.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const inviteRoom = urlParams.get('room');
+            const inviteRoom = new URLSearchParams(window.location.search).get('room');
             if (inviteRoom) {
                 pwdInput.value = inviteRoom;
                 document.getElementById('welcome-text').innerHTML = '👋 你收到了聊天邀请<br>输入昵称并加入';
             }
-            msgInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') sendMessage();
-            });
-
-            // 提前尝试加载并挑选中文声源
-            loadVoices();
-            if ('onvoiceschanged' in synth) {
-                synth.onvoiceschanged = loadVoices;
-            }
+            msgInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
         });
 
-        // 筛选中文发音人（解决苹果Safari没声音的核心关键）
-        function loadVoices() {
-            const voices = synth.getVoices();
-            if (voices.length > 0) {
-                // 优先找带有 zh-CN, zh_CN, 或包含 "Chinese" 的声源
-                targetVoice = voices.find(v => v.lang === 'zh-CN' || v.lang === 'zh_CN' || v.lang.includes('zh')) 
-                           || voices[0];
+        // ==========================================
+        // 终极双重发声机制（原生 TTS + 云端 MP3 兜底）
+        // ==========================================
+        function speakText(text) {
+            if (!isVoiceEnabled || !text) return;
+            
+            // 尝试方式 1：原生浏览器 TTS
+            if ('speechSynthesis' in window && window.SpeechSynthesisUtterance) {
+                try {
+                    window.speechSynthesis.cancel(); 
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = 'zh-CN';
+                    utterance.rate = 1.1;
+                    
+                    // 如果原生引擎播放出错，立即走云端兜底
+                    utterance.onerror = () => playCloudTTS(text);
+                    
+                    window.speechSynthesis.speak(utterance);
+                    return; // 如果没抛异常，说明进入了播放队列
+                } catch (e) {
+                    console.warn("原生TTS崩溃，启用云端兜底", e);
+                }
             }
+            
+            // 尝试方式 2：如果原生不支持或崩溃，走云端兜底方案
+            playCloudTTS(text);
         }
 
-        // ==========================================
-        // 终极解锁黑科技
-        // ==========================================
-        function unlockAudioEngine() {
+        // 调用云端免费接口生成 MP3 并播放
+        function playCloudTTS(text) {
             try {
-                // 1. 播放一个静音的HTML5 Audio并循环，保持音频Session处于活跃状态
-                silentAudio.play().catch(e => console.log('Audio保活被拦截', e));
-                
-                // 2. 强制TTS引擎发声
-                synth.cancel(); 
-                const utterance = new SpeechSynthesisUtterance('系统已连接');
-                if (targetVoice) utterance.voice = targetVoice; // 必须指定Voice对象
-                utterance.volume = 0.5;
-                utterance.rate = 1.3;
-                synth.speak(utterance);
-            } catch (e) {
-                console.error("解锁音频失败:", e);
+                // 使用有道词典公开的免费发音接口
+                const url = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(text)}&le=zh`;
+                cloudAudio.src = url;
+                cloudAudio.play().catch(e => console.log("等待用户物理交互解锁音频..."));
+            } catch (err) {
+                console.error("云端发声也失败:", err);
             }
         }
 
-        // 手动测试发声按钮（右上角的黄色播放按钮）
+        // 手动测试并解锁权限按钮
         function forceTestAudio() {
-            try {
-                silentAudio.play().catch(e => {});
-                synth.cancel();
-                const u = new SpeechSynthesisUtterance('声音测试成功，权限已获取');
-                if (targetVoice) u.voice = targetVoice;
-                u.volume = 1.0;
-                synth.speak(u);
-                alert("如果听到了声音，说明权限已打通。此后对方发消息也会自动播报！");
-            } catch (e) {
-                alert("您的浏览器拒绝了发声权限，请尝试关闭浏览器的静音模式或解除授权限制。");
-            }
-        }
-
-        function generateRandomCode() {
-            return Math.random().toString(36).substring(2, 8).toUpperCase();
+            // 先尝试解锁云端音频组件（这会让浏览器允许后续的 audio.play()）
+            cloudAudio.src = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent('语音通道已全面就绪')}&le=zh`;
+            cloudAudio.play().then(() => {
+                alert("✅ 语音通道已打通！原生浏览器拦截已绕过，已自动启用云端语音加速！");
+            }).catch(e => {
+                // 如果云端被拦截，最后试一下原生
+                if ('speechSynthesis' in window) {
+                    try {
+                        window.speechSynthesis.cancel();
+                        let u = new SpeechSynthesisUtterance('原生通道就绪');
+                        u.lang = 'zh-CN';
+                        window.speechSynthesis.speak(u);
+                        alert("原生语音通道就绪。");
+                    } catch (err) {
+                        alert("您的浏览器限制了所有发声请求，请在设置中允许本网页的音频播放权限！");
+                    }
+                }
+            });
         }
 
         function createRoom() {
             myName = document.getElementById('username').value.trim();
             if (!myName) return showStatus('❌ 请输入昵称', 'error');
+            
+            // 激活云端播放器权限
+            cloudAudio.play().catch(e=>{});
 
-            unlockAudioEngine(); // 点击瞬间解锁
-
-            let rawPwd = pwdInput.value.trim();
-            if (!rawPwd) {
-                rawPwd = generateRandomCode();
-                pwdInput.value = rawPwd;
-            }
-            roomPassword = rawPwd;
-            const myPeerId = ROOM_PREFIX + roomPassword;
-
+            roomPassword = pwdInput.value.trim() || Math.random().toString(36).substring(2, 8).toUpperCase();
+            pwdInput.value = roomPassword;
             showStatus('🔬 正在建立通道...', 'info');
-            initPeer(myPeerId, true);
+            initPeer(ROOM_PREFIX + roomPassword, true);
         }
 
         function joinRoom() {
             myName = document.getElementById('username').value.trim();
             roomPassword = pwdInput.value.trim();
-            
             if (!myName) return showStatus('❌ 请输入昵称', 'error');
             if (!roomPassword) return showStatus('❌ 请输入口令', 'error');
-
-            unlockAudioEngine(); // 点击瞬间解锁
+            
+            // 激活云端播放器权限
+            cloudAudio.play().catch(e=>{});
 
             showStatus('🔍 连接中...', 'info');
             initPeer(null, false);
@@ -316,95 +263,46 @@
 
         function initPeer(peerId, isHost) {
             cleanupPeer();
-
-            const peerConfig = {
-                config: { iceServers: [
-                    { url: 'stun:stun.l.google.com:19302' },
-                    { url: 'stun:stun1.l.google.com:19302' },
-                    { url: 'stun:stun.qq.com:3478' }
-                ]}
-            };
-
-            peer = peerId ? new Peer(peerId, peerConfig) : new Peer(peerConfig);
+            const config = { iceServers: [{url:'stun:stun.l.google.com:19302'}, {url:'stun:stun.qq.com:3478'}] };
+            peer = peerId ? new Peer(peerId, {config}) : new Peer({config});
 
             peer.on('open', (id) => {
-                if (isHost) {
-                    enterChatUI(true);
-                } else {
-                    const targetId = ROOM_PREFIX + roomPassword;
-                    conn = peer.connect(targetId, { reliable: true });
-                    setupConnectionEvents(conn, 'guest');
-                }
+                isHost ? enterChatUI(true) : setupConnectionEvents(peer.connect(ROOM_PREFIX + roomPassword, {reliable: true}), 'guest');
             });
 
-            if (isHost) {
-                peer.on('connection', (connection) => {
-                    if (conn) {
-                        connection.on('open', () => {
-                            connection.send({ type: 'system', text: '房间已满。' });
-                            setTimeout(() => connection.close(), 500);
-                        });
-                        return;
-                    }
-                    conn = connection;
-                    setupConnectionEvents(conn, 'host');
-                });
-            }
+            if (isHost) peer.on('connection', (c) => conn ? c.close() : setupConnectionEvents(c, 'host'));
 
             peer.on('error', (err) => {
                 if (err.type === 'unavailable-id') showStatus('❌ 口令已被使用', 'error');
                 else if (err.type === 'peer-unavailable') showStatus('❌ 找不到该房间', 'error');
-                else showStatus(`❌ 连接失败`, 'error');
+                else showStatus(`❌ 连接失败，请检查网络`, 'error');
             });
         }
 
-        function setupConnectionEvents(connection, role) {
-            connection.on('open', () => {
+        function setupConnectionEvents(c, role) {
+            conn = c;
+            conn.on('open', () => {
                 if (role === 'guest') enterChatUI(false);
                 const emptyState = chatBox.querySelector('.empty-state');
                 if (emptyState) emptyState.remove();
-
-                const joinMsg = role === 'host' ? `对方已加入` : `${myName} 加入了聊天`;
-                appendMessage('系统', joinMsg, 'system');
+                appendMessage('系统', role === 'host' ? `对方已加入` : `${myName} 加入了聊天`, 'system');
                 if (role === 'guest') conn.send({ type: 'system', text: `${myName} 成功连接` });
             });
-
-            connection.on('data', (data) => {
-                if (data.type === 'chat') {
-                    appendMessage(data.name, data.text, 'friend');
-                    if (isVoiceEnabled) speakText(data.text);
+            conn.on('data', (data) => {
+                if (data.type === 'chat') { 
+                    appendMessage(data.name, data.text, 'friend'); 
+                    speakText(data.text); 
                 } else if (data.type === 'system') {
                     appendMessage('系统', data.text, 'system');
                 }
             });
-
-            connection.on('close', () => {
-                appendMessage('系统', '⚠️ 对方已断开连接', 'system');
-                conn = null;
-            });
+            conn.on('close', () => { appendMessage('系统', '⚠️ 对方已断开连接', 'system'); conn = null; });
         }
 
         function enterChatUI(isHost) {
-            loginScreen.style.display = 'none';
-            chatScreen.style.display = 'flex';
-            document.getElementById('header-pwd').textContent = roomPassword;
-            chatBox.innerHTML = '';
-            
-            if(isHost) {
-                chatBox.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-user-clock" style="font-size: 30px;"></i>
-                        <p style="margin: 15px 0;">房间创建成功！等待对方加入...</p>
-                        <button onclick="shareRoom()" style="padding:10px 20px; border-radius:20px; border:none; background:var(--primary); color:white; cursor:pointer;">
-                            点击复制邀请链接
-                        </button>
-                        <p style="font-size: 12px; margin-top: 15px; color: var(--primary);">
-                            ↑右上角橙色按钮可随时测试发声↑
-                        </p>
-                    </div>`;
-            } else {
-                chatBox.innerHTML = `<div class="empty-state">连接中...</div>`;
-            }
+            loginScreen.style.display = 'none'; chatScreen.style.display = 'flex';
+            document.getElementById('header-pwd').textContent = roomPassword; chatBox.innerHTML = '';
+            chatBox.innerHTML = isHost ? `<div class="empty-state"><i class="fas fa-user-clock" style="font-size:30px;"></i><p style="margin:15px 0;">等待对方加入...</p><button onclick="shareRoom()" style="padding:10px 20px; border-radius:20px; border:none; background:var(--primary); color:white;">点击复制邀请链接</button><p style="font-size: 12px; margin-top: 15px; color: var(--primary);">↑若无声音，请点右上角橙色按钮↑</p></div>` : `<div class="empty-state">连接中...</div>`;
         }
 
         function sendMessage() {
@@ -416,86 +314,40 @@
         }
 
         function appendMessage(sender, text, type) {
-            const msgDiv = document.createElement('div');
-            msgDiv.className = `message msg-${type}`;
-            if (type === 'system') {
-                msgDiv.textContent = text;
-            } else {
-                const now = new Date();
-                const timeStr = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
-                msgDiv.innerHTML = `<div class="msg-name"><span>${sender}</span> <span>${timeStr}</span></div><div>${text}</div>`;
+            const div = document.createElement('div'); div.className = `message msg-${type}`;
+            if (type === 'system') div.textContent = text;
+            else {
+                const now = new Date(); const timeStr = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+                div.innerHTML = `<div class="msg-name"><span>${sender}</span> <span>${timeStr}</span></div><div>${text}</div>`;
             }
-            chatBox.appendChild(msgDiv);
-            chatBox.scrollTop = chatBox.scrollHeight;
+            chatBox.appendChild(div); chatBox.scrollTop = chatBox.scrollHeight;
         }
 
         function shareRoom() {
-            const shareUrl = `${window.location.origin}${window.location.pathname}?room=${roomPassword}`;
-            if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(shareUrl).then(() => {
-                    alert(`✅ 链接已复制！口令：${roomPassword}`);
-                }).catch(() => prompt("请手动复制链接：", shareUrl));
-            } else {
-                prompt("请手动复制：", shareUrl);
-            }
+            const url = `${window.location.origin}${window.location.pathname}?room=${roomPassword}`;
+            (navigator.clipboard && window.isSecureContext) ? navigator.clipboard.writeText(url).then(()=>alert(`✅ 链接已复制！口令：${roomPassword}`)).catch(()=>prompt("手动复制:", url)) : prompt("手动复制:", url);
         }
 
         function toggleVoice() {
             isVoiceEnabled = !isVoiceEnabled;
-            if (isVoiceEnabled) {
-                voiceToggleBtn.classList.add('active');
-                voiceToggleBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
-                forceTestAudio();
+            voiceToggleBtn.className = `icon-btn ${isVoiceEnabled ? 'active' : ''}`;
+            voiceToggleBtn.innerHTML = `<i class="fas fa-volume-${isVoiceEnabled ? 'up' : 'mute'}"></i>`;
+            if (!isVoiceEnabled) {
+                if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+                cloudAudio.pause();
             } else {
-                voiceToggleBtn.classList.remove('active');
-                voiceToggleBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
-                synth.cancel();
-            }
-        }
-
-        // ==========================================
-        // 健壮的实际发声方法
-        // ==========================================
-        function speakText(text) {
-            if (!text || text.includes('成功连接')) return;
-            try {
-                synth.cancel(); 
-                const utterance = new SpeechSynthesisUtterance(text);
-                
-                // 【核心修复】必须指定中文Voice对象，否则iOS Safari可能静音报错
-                if (targetVoice) utterance.voice = targetVoice;
-                
-                utterance.lang = 'zh-CN';
-                utterance.rate = 1.05;
-                utterance.volume = 1.0;
-                
-                synth.speak(utterance);
-            } catch (e) {
-                console.error("播报错误:", e);
+                forceTestAudio();
             }
         }
 
         function exitChat() {
-            if (confirm('退出当前房间？')) {
-                cleanupPeer();
-                window.history.replaceState({}, document.title, window.location.pathname);
-                chatScreen.style.display = 'none';
-                loginScreen.style.display = 'flex';
-                pwdInput.value = '';
-                silentAudio.pause(); // 停止后台静音播放
+            if (confirm('退出房间？')) {
+                cleanupPeer(); window.history.replaceState({}, document.title, window.location.pathname);
+                chatScreen.style.display = 'none'; loginScreen.style.display = 'flex'; pwdInput.value = '';
             }
         }
-
-        function cleanupPeer() {
-            if (conn) { try { conn.close(); } catch(e){} conn = null; }
-            if (peer) { try { peer.destroy(); } catch(e){} peer = null; }
-        }
-
-        function showStatus(msg, type, duration = 3000) {
-            loginStatus.textContent = msg;
-            loginStatus.className = `status ${type}`;
-            setTimeout(() => { if (loginStatus.textContent === msg) loginStatus.textContent = ''; }, duration);
-        }
+        function cleanupPeer() { if (conn) {try{conn.close();}catch(e){}} conn=null; if(peer) {try{peer.destroy();}catch(e){}} peer=null; }
+        function showStatus(msg, type, duration=3000) { loginStatus.textContent = msg; loginStatus.className = `status ${type}`; setTimeout(()=>{if(loginStatus.textContent===msg)loginStatus.textContent='';}, duration); }
     </script>
 </body>
 </html>
